@@ -6,7 +6,12 @@ package ch.hslu.cobau.minij;
 
 // milestone 2: parser
 
-unit : ; // empty rule to make project compile 
+unit : var ; // empty rule to make project compile
+
+programm: PROCEDURE 'main' LBRACKET RBRACKET BEGINBODY instruction ENDBODY;
+
+BEGINBODY:      BEGIN | LCUBRACKET;
+ENDBODY:        END | RCUBRACKET;
 
 PROGRAM:        'program';
 BEGIN:          'begin';
@@ -14,6 +19,16 @@ PROCEDURE:      'procedure';
 REF:            'ref';
 RETURN:         'return';
 END:            'end';
+
+instruction:    var+;
+
+var:            LITERAL IDENTIFIER SEM;
+
+LITERAL:        INT | BOOLEAN | STRING;
+IDENTIFIER:     LETTER+;
+
+WS:             [ \t\r\n]+ -> skip;
+
 
 //==========================================================
 // Operatoren
@@ -37,6 +52,7 @@ BAS:            '>';
 BOS:            '>=';
 SAS:            '<';
 SOS:            '<=';
+SEM:            ';';
 
 IF:             'if';
 THEN:           'then';
@@ -52,11 +68,5 @@ INT:            'int';
 BOOLEAN:        'boolean';
 STRING:         'string';
 
-
-
-
-
-
-IDENTIFIER:     (DIGIT | LETTER);
-DIGIT : [0-9] ;
-LETTER : [a-z] [A-Z];
+DIGIT :         '0'..'9';
+LETTER :        'a'..'z' | 'A'..'Z';
