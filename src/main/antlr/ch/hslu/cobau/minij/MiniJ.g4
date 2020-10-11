@@ -4,14 +4,34 @@ grammar MiniJ;
 package ch.hslu.cobau.minij;
 }
 
+unit
+    : program;
+
 program
-    : instruction* EOF;
+    : (procedure | instruction)* EOF;
 
 instruction
-    : variable
+    : (variable SEMICOLON)
     | record
     | branch
-    | loop;
+    | loop
+    //| assign
+    | test2
+    | (globalvariable SEMICOLON);
+
+procedure
+    : PROCEDURE IDENTIFIER LBRACKET parameter? RBRACKET
+    ((variable SEMICOLON)*)?
+    open
+    ((instruction*)? | (RETURN SEMICOLON)?)? | (call*)?
+    close SEMICOLON?;
+
+parameter
+    : REF? (globalvariable | variable) ((COMMA (globalvariable | variable))*)?;
+
+// Globale Variable?
+globalvariable
+    : IDENTIFIER IDENTIFIER;
 
 branch
     : IF LBRACKET condition RBRACKET THEN instruction*
@@ -22,23 +42,41 @@ loop
     : WHILE LBRACKET condition RBRACKET DO instruction* END SEMICOLON;
 
 record
-    : RECORD identifier variable* END SEMICOLON;
+    : RECORD IDENTIFIER (variable SEMICOLON)* END SEMICOLON;
 
 condition
-    : identifier
+    : IDENTIFIER
     (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS)
-    identifier;
+    IDENTIFIER;
+
+test2
+    : IDENTIFIER '='
+    LBRACKET*? test RBRACKET*?;
+
+test
+    : (VALUE | IDENTIFIER)? (PLUS | MINUS | DIVIDED | TIMES | MODULO) (VALUE | IDENTIFIER | test);
+
+// TODO
+assign
+    : IDENTIFIER '='
+    LBRACKET*? (((VALUE | IDENTIFIER) | (VALUE | IDENTIFIER) (PLUS | MINUS | DIVIDED | TIMES | MODULO) (VALUE | IDENTIFIER))) RBRACKET*? SEMICOLON;
+
+call
+    : IDENTIFIER LBRACKET IDENTIFIER? ((COMMA IDENTIFIER)*)? RBRACKET SEMICOLON;
 
 variable
-    : type (LEDBRACKET REDBRACKET)? identifier SEMICOLON;
+    : type (LEDBRACKET REDBRACKET)? IDENTIFIER;
 
 type
     :	BOOLEAN
     |	INT
     |   STRING;
 
-identifier
-    :	('_'|LETTER) ('_'|LETTER|DIGIT)* ;
+open
+    : BEGIN | LCUBRACKET;
+
+close
+    : END | RCUBRACKET;
 
 //==========================================================
 // Operatoren
@@ -63,6 +101,8 @@ BOS:            '>=';
 SAS:            '<';
 SOS:            '<=';
 SEMICOLON:      ';';
+COMMA:          ',';
+QUOTATIONMARK:  '"';
 
 //==========================================================
 // Reserved Keywords
@@ -81,12 +121,21 @@ RETURN:         'return';
 BEGIN:          'begin';
 END:            'end';
 ELSEIF:         'elsif';
-TRUE:           'true';
-FALSE:          'false';
-LENGTH:         'length';
 
-DIGIT:          '0'..'9' ;
-LETTER:         ('a'..'z'|'A'..'Z');
+LENGTH:         'length';
+PROCEDURE:      'procedure';
 
 COMMENT:        (('//' ~('\n')*) | '/*' .*? '*/') -> skip;
 WS:             [ \t\r\n]+ -> skip;
+
+VALUE:          BVALUE | NVALUE | SVALUE;
+NVALUE:         (PLUS | MINUS)? DIGIT+;
+BVALUE:         TRUE | FALSE;
+SVALUE:         QUOTATIONMARK ANYCHAR* QUOTATIONMARK;
+IDENTIFIER:     ('_'|LETTER)+ ('_'|LETTER|DIGIT)*;
+
+DIGIT:          '0'..'9' ;
+LETTER:         ('a'..'z'|'A'..'Z');
+ANYCHAR:        . ;
+TRUE:           'true';
+FALSE:          'false';
