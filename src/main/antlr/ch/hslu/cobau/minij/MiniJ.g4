@@ -4,31 +4,41 @@ grammar MiniJ;
 package ch.hslu.cobau.minij;
 }
 
-// milestone 2: parser
+program
+    : instruction* EOF;
 
-unit : var ; // empty rule to make project compile
+instruction
+    : variable
+    | record
+    | branch
+    | loop;
 
-programm: PROCEDURE 'main' LBRACKET RBRACKET BEGINBODY instruction ENDBODY;
+branch
+    : IF LBRACKET condition RBRACKET THEN instruction*
+    ((ELSEIF LBRACKET condition RBRACKET THEN instruction*)*)?
+    ELSE instruction* END SEMICOLON;
 
-BEGINBODY:      BEGIN | LCUBRACKET;
-ENDBODY:        END | RCUBRACKET;
+loop
+    : WHILE LBRACKET condition RBRACKET DO instruction* END SEMICOLON;
 
-PROGRAM:        'program';
-BEGIN:          'begin';
-PROCEDURE:      'procedure';
-REF:            'ref';
-RETURN:         'return';
-END:            'end';
+record
+    : RECORD identifier variable* END SEMICOLON;
 
-instruction:    var+;
+condition
+    : identifier
+    (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS)
+    identifier;
 
-var:            LITERAL IDENTIFIER SEM;
+variable
+    : type (LEDBRACKET REDBRACKET)? identifier SEMICOLON;
 
-LITERAL:        INT | BOOLEAN | STRING;
-IDENTIFIER:     LETTER+;
+type
+    :	BOOLEAN
+    |	INT
+    |   STRING;
 
-WS:             [ \t\r\n]+ -> skip;
-
+identifier
+    :	('_'|LETTER) ('_'|LETTER|DIGIT)* ;
 
 //==========================================================
 // Operatoren
@@ -52,21 +62,31 @@ BAS:            '>';
 BOS:            '>=';
 SAS:            '<';
 SOS:            '<=';
-SEM:            ';';
-
-IF:             'if';
-THEN:           'then';
-WHILE:          'while';
-DO:             'do';
-ELSE:           'else';
+SEMICOLON:      ';';
 
 //==========================================================
-// TYPES
+// Reserved Keywords
 //==========================================================
 RECORD:         'record';
 INT:            'int';
 BOOLEAN:        'boolean';
 STRING:         'string';
+IF:             'if';
+ELSE:           'else';
+THEN:           'then';
+WHILE:          'while';
+DO:             'do';
+REF:            'ref';
+RETURN:         'return';
+BEGIN:          'begin';
+END:            'end';
+ELSEIF:         'elsif';
+TRUE:           'true';
+FALSE:          'false';
+LENGTH:         'length';
 
-DIGIT :         '0'..'9';
-LETTER :        'a'..'z' | 'A'..'Z';
+DIGIT:          '0'..'9' ;
+LETTER:         ('a'..'z'|'A'..'Z');
+
+COMMENT:        (('//' ~('\n')*) | '/*' .*? '*/') -> skip;
+WS:             [ \t\r\n]+ -> skip;
