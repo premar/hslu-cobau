@@ -15,15 +15,16 @@ instruction
     | record
     | branch
     | loop
-    //| assign
-    | test2
+    | assign
     | (globalvariable SEMICOLON);
 
 procedure
     : PROCEDURE IDENTIFIER LBRACKET parameter? RBRACKET
     ((variable SEMICOLON)*)?
     open
-    ((instruction*)? | (RETURN SEMICOLON)?)? | (call*)?
+    (instruction*)?
+    (call*)?
+    (RETURN SEMICOLON)?
     close SEMICOLON?;
 
 parameter
@@ -49,17 +50,15 @@ condition
     (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS)
     IDENTIFIER;
 
-test2
-    : IDENTIFIER '='
-    LBRACKET*? test RBRACKET*?;
-
-test
-    : (VALUE | IDENTIFIER)? (PLUS | MINUS | DIVIDED | TIMES | MODULO) (VALUE | IDENTIFIER | test);
-
-// TODO
 assign
-    : IDENTIFIER '='
-    LBRACKET*? (((VALUE | IDENTIFIER) | (VALUE | IDENTIFIER) (PLUS | MINUS | DIVIDED | TIMES | MODULO) (VALUE | IDENTIFIER))) RBRACKET*? SEMICOLON;
+    :   (IDENTIFIER | VALUE) ASSIGN (INVERT | MINUS | PLUS | (DEC | INC)*)? assign (DEC | INC)? SEMICOLON
+    |   left=assign (TIMES|DIVIDED) right=assign
+    |   left=assign (PLUS|MINUS) right=assign
+    |   left=assign MODULO right=assign
+    |   left=assign (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS) right=assign
+    |   IDENTIFIER
+    |   VALUE
+    |   LBRACKET assign RBRACKET;
 
 call
     : IDENTIFIER LBRACKET IDENTIFIER? ((COMMA IDENTIFIER)*)? RBRACKET SEMICOLON;
@@ -103,6 +102,10 @@ SOS:            '<=';
 SEMICOLON:      ';';
 COMMA:          ',';
 QUOTATIONMARK:  '"';
+INVERT:         '!';
+ASSIGN:         '=';
+INC:            '++';
+DEC:            '--';
 
 //==========================================================
 // Reserved Keywords
