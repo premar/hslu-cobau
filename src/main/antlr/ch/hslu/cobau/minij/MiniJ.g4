@@ -37,7 +37,7 @@ globalvariable
 branch
     : IF LBRACKET condition RBRACKET THEN instruction*
     ((ELSEIF LBRACKET condition RBRACKET THEN instruction*)*)?
-    ELSE instruction* END SEMICOLON;
+    (ELSE instruction*)? END SEMICOLON;
 
 loop
     : WHILE LBRACKET condition RBRACKET DO instruction* END SEMICOLON;
@@ -46,22 +46,24 @@ record
     : RECORD IDENTIFIER (variable SEMICOLON)* END SEMICOLON;
 
 condition
-    : IDENTIFIER
+    : (IDENTIFIER | VALUE)
     (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS)
-    IDENTIFIER;
+    (IDENTIFIER | VALUE);
 
 assign
-    :   (IDENTIFIER | VALUE) ASSIGN (INVERT | MINUS | PLUS | (DEC | INC)*)? assign (DEC | INC)? SEMICOLON
+    :   (IDENTIFIER | VALUE) ASSIGN (PLUS | MINUS)? assign SEMICOLON
     |   left=assign (TIMES|DIVIDED) right=assign
     |   left=assign (PLUS|MINUS) right=assign
     |   left=assign MODULO right=assign
     |   left=assign (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS) right=assign
+    |   (INVERT | MINUS | PLUS | (DEC | INC))* (IDENTIFIER | VALUE)
+    |   (IDENTIFIER | VALUE) (DEC | INC)
     |   IDENTIFIER
     |   VALUE
     |   LBRACKET assign RBRACKET;
 
 call
-    : IDENTIFIER LBRACKET IDENTIFIER? ((COMMA IDENTIFIER)*)? RBRACKET SEMICOLON;
+    : IDENTIFIER LBRACKET assign? ((COMMA assign)*)? RBRACKET SEMICOLON;
 
 variable
     : type (LEDBRACKET REDBRACKET)? IDENTIFIER;
