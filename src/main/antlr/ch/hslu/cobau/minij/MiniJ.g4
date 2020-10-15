@@ -16,19 +16,27 @@ instruction
     | branch
     | loop
     | assign
+    | call
+    | (RETURN SEMICOLON)
     | (globalvariable SEMICOLON);
 
 procedure
     : PROCEDURE IDENTIFIER LBRACKET parameter? RBRACKET
-    ((variable SEMICOLON)*)?
-    open
+    (((globalvariable | variable) SEMICOLON)*)?
+    (procedure_1 | procedure_2);
+
+procedure_1:
+    BEGIN
     (instruction*)?
-    (call*)?
-    (RETURN SEMICOLON)?
-    close SEMICOLON?;
+    END SEMICOLON?;
+
+procedure_2:
+    LCUBRACKET
+    (instruction*)?
+    RCUBRACKET SEMICOLON?;
 
 parameter
-    : REF? (globalvariable | variable) ((COMMA (globalvariable | variable))*)?;
+    : REF? (globalvariable | variable) ((COMMA REF? (globalvariable | variable))*)?;
 
 // Globale Variable?
 globalvariable
@@ -43,7 +51,7 @@ loop
     : WHILE LBRACKET condition RBRACKET DO instruction* END SEMICOLON;
 
 record
-    : RECORD IDENTIFIER (variable SEMICOLON)* END SEMICOLON;
+    : RECORD IDENTIFIER ((variable | globalvariable) SEMICOLON)* END SEMICOLON?;
 
 condition
     : (IDENTIFIER | VALUE)
@@ -51,33 +59,45 @@ condition
     (IDENTIFIER | VALUE);
 
 assign
-    :   (IDENTIFIER | VALUE) ASSIGN (PLUS | MINUS)? assign SEMICOLON
+    :   (IDENTIFIER | VALUE | (DOT IDENTIFIER) | (IDENTIFIER (LEDBRACKET VALUE REDBRACKET)*)) ASSIGN (PLUS | MINUS)? assign SEMICOLON
     |   left=assign (TIMES|DIVIDED) right=assign
     |   left=assign (PLUS|MINUS) right=assign
     |   left=assign MODULO right=assign
     |   left=assign (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS) right=assign
-    |   (INVERT | MINUS | PLUS | (DEC | INC))* (IDENTIFIER | VALUE)
+    |   (INVERT | MINUS | PLUS | (DEC | INC))* (IDENTIFIER | VALUE | LBRACKET assign RBRACKET)
     |   (IDENTIFIER | VALUE) (DEC | INC)
     |   IDENTIFIER
+    |   IDENTIFIER (LEDBRACKET VALUE REDBRACKET)*
     |   VALUE
+    |   DOT IDENTIFIER
+    |   IDENTIFIER DOT IDENTIFIER
     |   LBRACKET assign RBRACKET;
+
+assign_new
+    :   (IDENTIFIER | VALUE) ASSIGN (PLUS | MINUS)? assign SEMICOLON
+    |   left=assign (TIMES|DIVIDED) right=assign
+    |   left=assign MODULO right=assign
+    |   left=assign (PLUS|MINUS) right=assign
+    |   LBRACKET assign RBRACKET
+    |   (IDENTIFIER | VALUE);
 
 call
     : IDENTIFIER LBRACKET assign? ((COMMA assign)*)? RBRACKET SEMICOLON;
 
 variable
-    : type (LEDBRACKET REDBRACKET)? IDENTIFIER;
+    : type ((LEDBRACKET REDBRACKET)*)? IDENTIFIER
+    | DOT IDENTIFIER;
+
+variable_new
+    : IDENTIFIER
+    | IDENTIFIER DOT IDENTIFIER
+    | type IDENTIFIER
+    | type LEDBRACKET REDBRACKET IDENTIFIER;
 
 type
     :	BOOLEAN
     |	INT
     |   STRING;
-
-open
-    : BEGIN | LCUBRACKET;
-
-close
-    : END | RCUBRACKET;
 
 //==========================================================
 // Operatoren
@@ -108,6 +128,7 @@ INVERT:         '!';
 ASSIGN:         '=';
 INC:            '++';
 DEC:            '--';
+DOT:            '.';
 
 //==========================================================
 // Reserved Keywords
