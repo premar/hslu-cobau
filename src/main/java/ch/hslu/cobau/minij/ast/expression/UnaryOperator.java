@@ -2,6 +2,7 @@ package ch.hslu.cobau.minij.ast.expression;
 
 public enum UnaryOperator {
     MINUS,
+    PLUS,
     NOT,
     PRE_INCREMENT,
     POST_INCREMENT,
