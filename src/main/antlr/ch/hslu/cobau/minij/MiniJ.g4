@@ -1,168 +1,149 @@
+/*
+ * Reference grammar for language "miniJ"
+ */
 grammar MiniJ;
 
 @header {
 package ch.hslu.cobau.minij;
 }
 
-unit
-    : program;
+///////////////////////////////////////////////////////////////////////////////
+// Parsing rules
+///////////////////////////////////////////////////////////////////////////////
 
-program
-    : (procedure | instruction)* EOF;
+// declaractions
+unit        : member* EOF;
+member      : declaration | record | procedure | SEMICOLON;
 
-instruction
-    : (variable SEMICOLON)
-    | record
-    | branch
-    | loop
-    | assign
-    | call
-    | (RETURN SEMICOLON)
-    | (globalvariable SEMICOLON);
+record      : RECORD identifier (declaration)* END;
 
-procedure
-    : PROCEDURE IDENTIFIER LBRACKET parameter? RBRACKET
-    (((globalvariable | variable) SEMICOLON)*)?
-    (procedure_1 | procedure_2);
+// procedures and blocks
+procedure     : PROCEDURE identifier LPAREN (parameter (COMMA parameter)*)? RPAREN declarations procedureBody;
+parameter     : (REF)? type identifier;
+declarations  : (declarationStatement)*;
 
-procedure_1:
-    BEGIN
-    (instruction*)?
-    END SEMICOLON?;
+procedureBody : LBRACE block RBRACE
+              | BEGIN block END
+              ;
 
-procedure_2:
-    LCUBRACKET
-    (instruction*)?
-    RCUBRACKET SEMICOLON?;
+block         : (statement)*;
 
-parameter
-    : REF? (globalvariable | variable) ((COMMA REF? (globalvariable | variable))*)?;
+// statements
+declarationStatement : declaration | SEMICOLON;
+statement            : assignment | callStatement | returnStatement | ifStatement | whileStatement | SEMICOLON;
 
-// Globale Variable?
-globalvariable
-    : IDENTIFIER IDENTIFIER;
+assignment           : memoryAccess ASSIGN expression SEMICOLON;
+callStatement        : identifier LPAREN (expression (COMMA expression)*)? RPAREN SEMICOLON;
+whileStatement       : WHILE LPAREN expression RPAREN DO block END;
+returnStatement      : RETURN SEMICOLON;
 
-branch
-    : IF LBRACKET condition RBRACKET THEN instruction*
-    ((ELSEIF LBRACKET condition RBRACKET THEN instruction*)*)?
-    (ELSE instruction*)? END SEMICOLON;
+ifStatement          : IF LPAREN expression RPAREN THEN block (elsifClause)* (elseClause)? END;
+elsifClause          : ELSIF LPAREN expression RPAREN THEN block;
+elseClause           : ELSE block;
 
-loop
-    : WHILE LBRACKET condition RBRACKET DO instruction* END SEMICOLON;
+// expressions
+expression : LPAREN expression RPAREN
+           | memoryAccess (INCREMENT | DECREMENT)
+           | unaryExpression
+           | expression binaryOp=(TIMES | DIV | MOD) expression                          // NOTE: order is important.
+           | expression binaryOp=(PLUS | MINUS) expression                               // In ANTLR order reflects
+           | expression binaryOp=(EQUAL | UNEQUAL | AND | OR) expression                 // the associativity of the
+           | expression binaryOp=(LESSER | GREATER | LESSER_EQ | GREATER_EQ) expression  // operations.
+           | expression binaryOp=(EQUAL | UNEQUAL) expression                            // Thus, operator with highest
+           | expression binaryOp=AND expression                                          // precendence MUST be listed
+           | expression binaryOp=OR expression                                           // first.
+           | trueConstant
+           | falseConstant
+           | integerConstant
+           | stringConstant
+           | memoryAccess
+           ;
 
-record
-    : RECORD IDENTIFIER ((variable | globalvariable) SEMICOLON)* END SEMICOLON?;
+unaryExpression : unaryOp=(NOT | MINUS | PLUS | INCREMENT | DECREMENT) expression;
+trueConstant    : TRUE;
+falseConstant   : FALSE;
+integerConstant : INTEGER;
+stringConstant  : STRINGCONSTANT;
+memoryAccess    : ID
+                | memoryAccess DOT ID
+                | memoryAccess LBRACKET expression RBRACKET
+                ;
 
-condition
-    : (IDENTIFIER | VALUE | IDENTIFIER LEDBRACKET (VALUE | IDENTIFIER) REDBRACKET)
-    (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS)
-    (IDENTIFIER | VALUE | IDENTIFIER LEDBRACKET (VALUE | IDENTIFIER) REDBRACKET);
+// types and identifier
+declaration   : type identifier SEMICOLON;
+type          : basicType | type LBRACKET RBRACKET;
+basicType     : integerType | booleanType | stringType | recordType;
+integerType   : INT;
+stringType    : STRING;
+booleanType   : BOOLEAN;
+recordType    : identifier;
 
-assign
-    :   (IDENTIFIER | VALUE | (DOT IDENTIFIER (LEDBRACKET (VALUE | IDENTIFIER) REDBRACKET)?) | (IDENTIFIER (LEDBRACKET VALUE REDBRACKET)*)) ASSIGN (PLUS | MINUS)? assign SEMICOLON
-    |   left=assign (TIMES|DIVIDED) right=assign
-    |   left=assign (PLUS|MINUS) right=assign
-    |   left=assign MODULO right=assign
-    |   left=assign (OR | AND | EQUAL | NEQUAL | BAS | BOS | SAS | SOS) right=assign
-    |   (INVERT | MINUS | PLUS | (DEC | INC))* (IDENTIFIER | VALUE | LBRACKET assign RBRACKET)
-    |   (IDENTIFIER | VALUE) (DEC | INC)
-    |   IDENTIFIER
-    |   IDENTIFIER (LEDBRACKET (VALUE | IDENTIFIER) REDBRACKET)*
-    |   IDENTIFIER DOT IDENTIFIER (LEDBRACKET VALUE REDBRACKET)*
-    |   VALUE
-    |   IDENTIFIER DOT IDENTIFIER
-    |   LBRACKET assign RBRACKET;
+identifier    : ID;
 
-assign_new
-    :   (IDENTIFIER | VALUE) ASSIGN (PLUS | MINUS)? assign SEMICOLON
-    |   left=assign (TIMES|DIVIDED) right=assign
-    |   left=assign MODULO right=assign
-    |   left=assign (PLUS|MINUS) right=assign
-    |   LBRACKET assign RBRACKET
-    |   (IDENTIFIER | VALUE);
+///////////////////////////////////////////////////////////////////////////////
+// Lexer rules
+///////////////////////////////////////////////////////////////////////////////
 
-call
-    : IDENTIFIER LBRACKET assign? ((COMMA assign)*)? RBRACKET SEMICOLON;
+// operators, blocks, arrays indexes, and parameter lists
+LPAREN:        '(';
+RPAREN:        ')';
+LBRACE:        '{';
+RBRACE:        '}';
+LBRACKET:      '[';
+RBRACKET:      ']';
+SEMICOLON:     ';';
+COMMA:         ',';
+ASSIGN:        '=';
+INCREMENT:     '++';
+DECREMENT:     '--';
+PLUS:          '+';
+MINUS:         '-';
+TIMES:         '*';
+DIV:           '/';
+MOD:           '%';
+DOT:           '.';
+EQUAL:         '==';
+UNEQUAL:       '!=';
+LESSER:        '<';
+GREATER:       '>';
+LESSER_EQ:     '<=';
+GREATER_EQ:    '>=';
+NOT:           '!';
+AND:           '&&';
+OR:            '||';
 
-variable
-    : type ((LEDBRACKET REDBRACKET)*)? IDENTIFIER
-    | LEDBRACKET REDBRACKET* IDENTIFIER
-    | DOT IDENTIFIER;
 
-variable_new
-    : IDENTIFIER
-    | IDENTIFIER DOT IDENTIFIER
-    | type IDENTIFIER
-    | type LEDBRACKET REDBRACKET IDENTIFIER;
+// declaraction
+RECORD:       'record';
+BEGIN:        'begin';
+END:          'end';
+PROCEDURE:    'procedure';
+REF:          'ref';
 
-type
-    :	BOOLEAN
-    |	INT
-    |   STRING;
+// control flow
+IF:           'if';
+THEN:         'then';
+ELSIF:        'elsif';
+ELSE:         'else';
+WHILE:        'while';
+DO:           'do';
+RETURN:       'return';
 
-//==========================================================
-// Operatoren
-//==========================================================
-MODULO:         '%';
-DIVIDED:        '/';
-TIMES:          '*';
-PLUS:           '+';
-MINUS:          '-';
-LBRACKET:       '(';
-RBRACKET:       ')';
-LEDBRACKET:     '[';
-REDBRACKET:     ']';
-LCUBRACKET:     '{';
-RCUBRACKET:     '}';
-OR:             '||';
-AND:            '&&';
-EQUAL:          '==';
-NEQUAL:         '!=';
-BAS:            '>';
-BOS:            '>=';
-SAS:            '<';
-SOS:            '<=';
-SEMICOLON:      ';';
-COMMA:          ',';
-QUOTATIONMARK:  '"';
-INVERT:         '!';
-ASSIGN:         '=';
-INC:            '++';
-DEC:            '--';
-DOT:            '.';
+// types
+INT:          'int';
+BOOLEAN:      'boolean';
+STRING:       'string';
 
-//==========================================================
-// Reserved Keywords
-//==========================================================
-RECORD:         'record';
-INT:            'int';
-BOOLEAN:        'boolean';
-STRING:         'string';
-IF:             'if';
-ELSE:           'else';
-THEN:           'then';
-WHILE:          'while';
-DO:             'do';
-REF:            'ref';
-RETURN:         'return';
-BEGIN:          'begin';
-END:            'end';
-ELSEIF:         'elsif';
-
-LENGTH:         'length';
-PROCEDURE:      'procedure';
-
-COMMENT:        (('//' ~('\n')*) | '/*' .*? '*/') -> skip;
-WS:             [ \t\r\n]+ -> skip;
-
-VALUE:          BVALUE | NVALUE | SVALUE;
-NVALUE:         (PLUS | MINUS)? DIGIT+;
-BVALUE:         TRUE | FALSE;
-SVALUE:         QUOTATIONMARK ANYCHAR* QUOTATIONMARK;
-IDENTIFIER:     ('_'|LETTER)+ ('_'|LETTER|DIGIT)*;
-
-DIGIT:          '0'..'9' ;
-LETTER:         ('a'..'z'|'A'..'Z');
-ANYCHAR:        . ;
+// values
 TRUE:           'true';
 FALSE:          'false';
+INTEGER:        ('+'|'-')?[0-9]+;
+STRINGCONSTANT: '"' (~'"')* '"'; //
+
+// identifiers: order is important as all other keywords have precendence
+ID : [a-zA-Z][a-zA-Z0-9_$]*;
+
+// comments
+LINE_COMMENT: '//' ~[\r\n]* -> skip; // skip contents of line comments
+BLOCKCOMMENT: '/*' .*? '*/' -> skip; // skip contents of block comments
+WS:           [ \t\r\n]+    -> skip; // skip spaces, tabs, newlines

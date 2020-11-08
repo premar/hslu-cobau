@@ -40,6 +40,9 @@ public class MiniJCompiler {
         MiniJParser.UnitContext unitContext = miniJParser.unit();
 
         // semantic check (milestone 3)
+        CustomBuilder customBuilder = new CustomBuilder();
+        unitContext.accept(customBuilder);
+
         // code generation (milestone 4)
         // runtime and system libraries (milestone 5)
 
