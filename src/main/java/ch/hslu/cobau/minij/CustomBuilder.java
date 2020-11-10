@@ -15,7 +15,6 @@ import ch.hslu.cobau.minij.ast.type.StringType;
 import ch.hslu.cobau.minij.ast.type.Type;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Stack;
 
 public class CustomBuilder extends MiniJBaseVisitor<Object> {
@@ -26,96 +25,86 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
 
     @Override
     public Object visitUnit(MiniJParser.UnitContext ctx) {
-        visitChildren(ctx);
-
+        super.visitChildren(ctx);
         LinkedList<Declaration> globals = new LinkedList<>();
         LinkedList<Procedure> procedures = new LinkedList<>();
         LinkedList<RecordStructure> recordStructures = new LinkedList<>();
-
         while (!globalsStack.empty()) {
             globals.addFirst((Declaration) globalsStack.pop());
         }
-
         while (!proceduresStack.empty()) {
             procedures.addFirst((Procedure) proceduresStack.pop());
         }
-
         while (!recordStructuresStack.empty()) {
             recordStructures.addFirst((RecordStructure) recordStructuresStack.pop());
         }
-
         return new Program(globals, procedures, recordStructures);
     }
 
     @Override
     public Object visitDeclarations(MiniJParser.DeclarationsContext ctx) {
-        visitDeclarations(ctx);
+        super.visitDeclarations(ctx);
         return null;
     }
 
     @Override
     public Object visitDeclaration(MiniJParser.DeclarationContext ctx) {
-        visitChildren(ctx);
-        var type = (Type) stack.pop();
+        super.visitChildren(ctx);
         var identifier = (String) stack.pop();
+        var type = (Type) stack.pop();
         globalsStack.push(new Declaration(identifier, type));
         return null;
     }
 
     @Override
     public Object visitMember(MiniJParser.MemberContext ctx) {
-        visitMember(ctx);
+        super.visitMember(ctx);
         return null;
     }
 
     @Override
     public Object visitRecord(MiniJParser.RecordContext ctx) {
-        visitRecord(ctx);
+        super.visitRecord(ctx);
         var identifier = (String) stack.pop();
-
         LinkedList<Declaration> declarations = new LinkedList<>();
         while(stack.peek().getClass() == Declaration.class) {
             declarations.addFirst((Declaration) stack.pop());
         }
-
         stack.push(new RecordStructure(identifier, declarations));
         return null;
     }
 
     @Override
     public Object visitProcedure(MiniJParser.ProcedureContext ctx) {
-        visitProcedure(ctx);
+        super.visitProcedure(ctx);
         var identifier = (String) stack.pop();
-
         LinkedList<Declaration> declarations = new LinkedList<>();
         while(stack.peek().getClass() == Declaration.class) {
             declarations.addFirst((Declaration) stack.pop());
         }
-
         LinkedList<Statement> statements = new LinkedList<>();
         while(stack.peek().getClass() == Statement.class) {
             statements.addFirst((Statement) stack.pop());
         }
-
         stack.push(new Procedure(identifier, declarations, statements));
         return null;
     }
 
     @Override
     public Object visitParameter(MiniJParser.ParameterContext ctx) {
-        visitParameter(ctx);
+        super.visitParameter(ctx);
         return null;
     }
 
     @Override
     public Object visitProcedureBody(MiniJParser.ProcedureBodyContext ctx) {
-        visitProcedureBody(ctx);
+        super.visitProcedureBody(ctx);
         return null;
     }
 
     @Override
     public Object visitBlock(MiniJParser.BlockContext ctx) {
-        visitBlock(ctx);
+        super.visitBlock(ctx);
         LinkedList<Statement> statements = new LinkedList<>();
         while(stack.peek().getClass() == Statement.class) {
             statements.addFirst((Statement) stack.pop());
@@ -126,20 +115,20 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
 
     @Override
     public Object visitDeclarationStatement(MiniJParser.DeclarationStatementContext ctx) {
-        visitDeclarationStatement(ctx);
+        super.visitDeclarationStatement(ctx);
         stack.push(new DeclarationStatement((Declaration) stack.pop()));
         return null;
     }
 
     @Override
     public Object visitStatement(MiniJParser.StatementContext ctx) {
-        visitStatement(ctx);
+        super.visitStatement(ctx);
         return null;
     }
 
     @Override
     public Object visitAssignment(MiniJParser.AssignmentContext ctx) {
-        visitAssignment(ctx);
+        super.visitAssignment(ctx);
         var right = (Expression) stack.pop();
         var left = (Expression) stack.pop();
         stack.push(new AssignmentStatement(left, right));
@@ -148,9 +137,8 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
 
     @Override
     public Object visitCallStatement(MiniJParser.CallStatementContext ctx) {
-        visitCallStatement(ctx);
+        super.visitCallStatement(ctx);
         var identifier = (String) stack.pop();
-
         LinkedList<Expression> expressions = new LinkedList<>();
         while(stack.peek().getClass() == Expression.class) {
             expressions.addFirst((Expression) stack.pop());
@@ -161,7 +149,7 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
 
     @Override
     public Object visitWhileStatement(MiniJParser.WhileStatementContext ctx) {
-        visitWhileStatement(ctx);
+        super.visitWhileStatement(ctx);
         var expression = (Expression) stack.pop();
         var statements = ((Block) stack.pop()).getStatements();
         stack.push(new WhileStatement(expression, statements));
@@ -170,49 +158,47 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
 
     @Override
     public Object visitReturnStatement(MiniJParser.ReturnStatementContext ctx) {
-        visitReturnStatement(ctx);
+        super.visitReturnStatement(ctx);
         stack.push(new ReturnStatement());
         return null;
     }
 
     @Override
     public Object visitIfStatement(MiniJParser.IfStatementContext ctx) {
-        visitIfStatement(ctx);
+        super.visitIfStatement(ctx);
         Block elseBlock = null;
         var expression = (Expression) stack.pop();
         var statements = ((Block) stack.pop()).getStatements();
-
         if(stack.peek().getClass() == Block.class)
         {
             elseBlock = ((Block) stack.pop());
         }
-
         stack.push(new IfStatement(expression, statements, elseBlock));
         return null;
     }
 
     @Override
     public Object visitElsifClause(MiniJParser.ElsifClauseContext ctx) {
-        visitElsifClause(ctx);
+        super.visitElsifClause(ctx);
         return null;
     }
 
     @Override
     public Object visitElseClause(MiniJParser.ElseClauseContext ctx) {
-        visitElseClause(ctx);
+        super.visitElseClause(ctx);
         return null;
     }
 
     @Override
     public Object visitExpression(MiniJParser.ExpressionContext ctx) {
-        visitExpression(ctx);
+        super.visitExpression(ctx);
         //TODO Expression
         return null;
     }
 
     @Override
     public Object visitUnaryExpression(MiniJParser.UnaryExpressionContext ctx) {
-        visitUnaryExpression(ctx);
+        super.visitUnaryExpression(ctx);
         var expression = (Expression) stack.pop();
         var type = MiniJParser.VOCABULARY.getSymbolicName(ctx.unaryOp.getType());
         UnaryOperator operator = null;
@@ -239,42 +225,42 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
 
     @Override
     public Object visitTrueConstant(MiniJParser.TrueConstantContext ctx) {
-        visitTrueConstant(ctx);
+        super.visitTrueConstant(ctx);
         stack.push(new StringConstant(ctx.TRUE().getText()));
         return null;
     }
 
     @Override
     public Object visitFalseConstant(MiniJParser.FalseConstantContext ctx) {
-        visitFalseConstant(ctx);
+        super.visitFalseConstant(ctx);
         stack.push(new StringConstant(ctx.FALSE().getText()));
         return null;
     }
 
     @Override
     public Object visitIntegerConstant(MiniJParser.IntegerConstantContext ctx) {
-        visitIntegerConstant(ctx);
+        super.visitIntegerConstant(ctx);
         stack.push(new StringConstant(ctx.INTEGER().getText()));
         return null;
     }
 
     @Override
     public Object visitStringConstant(MiniJParser.StringConstantContext ctx) {
-        visitStringConstant(ctx);
+        super.visitStringConstant(ctx);
         stack.push(new StringConstant(ctx.STRINGCONSTANT().getText()));
         return null;
     }
 
     @Override
     public Object visitMemoryAccess(MiniJParser.MemoryAccessContext ctx) {
-        visitMemoryAccess(ctx);
+        super.visitMemoryAccess(ctx);
         //TODO MemoryAccess
         return null;
     }
 
     @Override
     public Object visitType(MiniJParser.TypeContext ctx) {
-        visitType(ctx);
+        super.visitType(ctx);
         if(ctx.LBRACKET() != null) {
             //TODO Array
         }
@@ -283,40 +269,40 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
 
     @Override
     public Object visitBasicType(MiniJParser.BasicTypeContext ctx) {
-        visitBasicType(ctx);
+        super.visitBasicType(ctx);
         return null;
     }
 
     @Override
     public Object visitIntegerType(MiniJParser.IntegerTypeContext ctx) {
-       visitIntegerType(ctx);
+       super.visitIntegerType(ctx);
        stack.push(new IntegerType());
        return null;
     }
 
     @Override
     public Object visitStringType(MiniJParser.StringTypeContext ctx) {
-        visitStringType(ctx);
+        super.visitStringType(ctx);
         stack.push(new StringType());
         return null;
     }
 
     @Override
     public Object visitBooleanType(MiniJParser.BooleanTypeContext ctx) {
-        visitBooleanType(ctx);
+        super.visitBooleanType(ctx);
         stack.push(new BooleanType());
         return null;
     }
 
     @Override
     public Object visitRecordType(MiniJParser.RecordTypeContext ctx) {
-        visitRecordType(ctx);
+        super.visitRecordType(ctx);
         return null;
     }
 
     @Override
     public Object visitIdentifier(MiniJParser.IdentifierContext ctx) {
-        visitIdentifier(ctx);
+        super.visitIdentifier(ctx);
         stack.push(ctx.ID().getText());
         return null;
     }
