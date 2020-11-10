@@ -1,1 +1,4 @@
-int number1;
+record Coordinate
+int x;
+int y;
+end

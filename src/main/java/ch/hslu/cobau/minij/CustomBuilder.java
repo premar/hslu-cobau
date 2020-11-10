@@ -44,6 +44,13 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     @Override
     public Object visitDeclarations(MiniJParser.DeclarationsContext ctx) {
         super.visitDeclarations(ctx);
+        //TODO Globale Variablen checken
+        LinkedList<Declaration> declarations = new LinkedList<>();
+        while(stack.peek().getClass() == DeclarationStatement.class) {
+
+            declarations.addFirst(((DeclarationStatement) stack.pop()).getDeclaration());
+        }
+        stack.push(declarations);
         return null;
     }
 
@@ -52,7 +59,7 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
         super.visitChildren(ctx);
         var identifier = (String) stack.pop();
         var type = (Type) stack.pop();
-        globalsStack.push(new Declaration(identifier, type));
+        stack.push(new Declaration(identifier, type));
         return null;
     }
 
@@ -65,28 +72,26 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     @Override
     public Object visitRecord(MiniJParser.RecordContext ctx) {
         super.visitRecord(ctx);
-        var identifier = (String) stack.pop();
+
         LinkedList<Declaration> declarations = new LinkedList<>();
         while(stack.peek().getClass() == Declaration.class) {
             declarations.addFirst((Declaration) stack.pop());
         }
-        stack.push(new RecordStructure(identifier, declarations));
+        var identifier = (String) stack.pop();
+
+        recordStructuresStack.push(new RecordStructure(identifier, declarations));
         return null;
     }
 
     @Override
     public Object visitProcedure(MiniJParser.ProcedureContext ctx) {
         super.visitProcedure(ctx);
+
+        var statements = ((Block) stack.pop()).getStatements();
+        var declarations = (LinkedList<Declaration>) stack.pop();
         var identifier = (String) stack.pop();
-        LinkedList<Declaration> declarations = new LinkedList<>();
-        while(stack.peek().getClass() == Declaration.class) {
-            declarations.addFirst((Declaration) stack.pop());
-        }
-        LinkedList<Statement> statements = new LinkedList<>();
-        while(stack.peek().getClass() == Statement.class) {
-            statements.addFirst((Statement) stack.pop());
-        }
-        stack.push(new Procedure(identifier, declarations, statements));
+
+        proceduresStack.push(new Procedure(identifier, declarations, statements));
         return null;
     }
 
