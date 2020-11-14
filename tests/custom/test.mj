@@ -1,4 +1,8 @@
-record Coordinate
-int x;
-int y;
+procedure test(int a, int b)
+begin
+end
+procedure main()
+int number;
+begin
+test(1, number);
 end

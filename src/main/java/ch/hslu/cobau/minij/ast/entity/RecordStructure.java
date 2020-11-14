@@ -30,4 +30,18 @@ public class RecordStructure extends AstElement {
     public void visitChildren(AstVisitor astVisitor) {
         declarations.forEach(declaration -> declaration.accept(astVisitor));
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof RecordStructure))
+            return false;
+        if (obj == this)
+            return true;
+        return this.identifier.equals(((RecordStructure) obj).identifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return identifier.hashCode() * declarations.hashCode();
+    }
 }

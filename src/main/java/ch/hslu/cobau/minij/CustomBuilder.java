@@ -1,24 +1,15 @@
 package ch.hslu.cobau.minij;
 
-import ch.hslu.cobau.minij.ast.constants.StringConstant;
-import ch.hslu.cobau.minij.ast.entity.Declaration;
-import ch.hslu.cobau.minij.ast.entity.Procedure;
-import ch.hslu.cobau.minij.ast.entity.Program;
-import ch.hslu.cobau.minij.ast.entity.RecordStructure;
-import ch.hslu.cobau.minij.ast.expression.Expression;
-import ch.hslu.cobau.minij.ast.expression.UnaryExpression;
-import ch.hslu.cobau.minij.ast.expression.UnaryOperator;
+import ch.hslu.cobau.minij.ast.constants.*;
+import ch.hslu.cobau.minij.ast.entity.*;
+import ch.hslu.cobau.minij.ast.expression.*;
 import ch.hslu.cobau.minij.ast.statement.*;
-import ch.hslu.cobau.minij.ast.type.BooleanType;
-import ch.hslu.cobau.minij.ast.type.IntegerType;
-import ch.hslu.cobau.minij.ast.type.StringType;
-import ch.hslu.cobau.minij.ast.type.Type;
+import ch.hslu.cobau.minij.ast.type.*;
 
 import java.util.LinkedList;
 import java.util.Stack;
 
 public class CustomBuilder extends MiniJBaseVisitor<Object> {
-    private final Stack<Object> globalsStack = new Stack<>();
     private final Stack<Object> proceduresStack = new Stack<>();
     private final Stack<Object> recordStructuresStack = new Stack<>();
     private final Stack<Object> stack = new Stack<>();
@@ -29,8 +20,9 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
         LinkedList<Declaration> globals = new LinkedList<>();
         LinkedList<Procedure> procedures = new LinkedList<>();
         LinkedList<RecordStructure> recordStructures = new LinkedList<>();
-        while (!globalsStack.empty()) {
-            globals.addFirst((Declaration) globalsStack.pop());
+
+        while (!stack.empty()) {
+            globals.addFirst((Declaration) stack.pop());
         }
         while (!proceduresStack.empty()) {
             procedures.addFirst((Procedure) proceduresStack.pop());
@@ -38,19 +30,31 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
         while (!recordStructuresStack.empty()) {
             recordStructures.addFirst((RecordStructure) recordStructuresStack.pop());
         }
+
+        for (int i = 1; i < globals.size(); i++) {
+            if(globals.get(i-1).equals(globals.get(i))){
+                throw new RuntimeException(globals.get(i).getIdentifier() + " was is globals a duplicate!");
+            }
+        }
+
+        for (int i = 1; i < procedures.size(); i++) {
+            if(procedures.get(i-1).equals(procedures.get(i))){
+                throw new RuntimeException(procedures.get(i).getIdentifier() + " was procedures a duplicate!");
+            }
+        }
+
+        for (int i = 1; i < recordStructures.size(); i++) {
+            if(recordStructures.get(i-1).equals(recordStructures.get(i))){
+                throw new RuntimeException(recordStructures.get(i).getIdentifier() + " was recordStructures a duplicate!");
+            }
+        }
+
         return new Program(globals, procedures, recordStructures);
     }
 
     @Override
     public Object visitDeclarations(MiniJParser.DeclarationsContext ctx) {
         super.visitDeclarations(ctx);
-        //TODO Globale Variablen checken
-        LinkedList<Declaration> declarations = new LinkedList<>();
-        while(stack.peek().getClass() == DeclarationStatement.class) {
-
-            declarations.addFirst(((DeclarationStatement) stack.pop()).getDeclaration());
-        }
-        stack.push(declarations);
         return null;
     }
 
@@ -77,6 +81,13 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
         while(stack.peek().getClass() == Declaration.class) {
             declarations.addFirst((Declaration) stack.pop());
         }
+
+        for (int i = 1; i < declarations.size(); i++) {
+            if(declarations.get(i-1).equals(declarations.get(i))){
+                throw new RuntimeException(declarations.get(i).getIdentifier() + " was declarations a duplicate!");
+            }
+        }
+
         var identifier = (String) stack.pop();
 
         recordStructuresStack.push(new RecordStructure(identifier, declarations));
@@ -87,17 +98,50 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     public Object visitProcedure(MiniJParser.ProcedureContext ctx) {
         super.visitProcedure(ctx);
 
-        var statements = ((Block) stack.pop()).getStatements();
-        var declarations = (LinkedList<Declaration>) stack.pop();
+        LinkedList<Statement> blockStatements = new LinkedList<Statement>();
+        LinkedList<Declaration> declarationsStatements = new LinkedList<Declaration>();
+        LinkedList<Parameter> parameters = new LinkedList<Parameter>();
+
+        if(stack.peek().getClass() == Block.class) {
+            blockStatements = new LinkedList<Statement>(((Block) stack.pop()).getStatements());
+        }
+
+        while(stack.peek().getClass() == DeclarationStatement.class) {
+            declarationsStatements.addFirst(((DeclarationStatement) stack.pop()).getDeclaration());
+        }
+
+        for (int i = 1; i < declarationsStatements.size(); i++) {
+            if(declarationsStatements.get(i-1).equals(declarationsStatements.get(i))){
+                throw new RuntimeException(declarationsStatements.get(i).getIdentifier() + " was declarationsStatements a duplicate!");
+            }
+        }
+
+        while(stack.peek().getClass() == Parameter.class) {
+            parameters.addFirst((Parameter) stack.pop());
+        }
+
+        for (int i = 1; i < parameters.size(); i++) {
+            if(parameters.get(i-1).equals(parameters.get(i))){
+                throw new RuntimeException(parameters.get(i).getIdentifier() + " was parameters a duplicate!");
+            }
+        }
+
         var identifier = (String) stack.pop();
 
-        proceduresStack.push(new Procedure(identifier, declarations, statements));
+        proceduresStack.push(new Procedure(identifier, parameters, declarationsStatements, blockStatements));
         return null;
     }
 
     @Override
     public Object visitParameter(MiniJParser.ParameterContext ctx) {
         super.visitParameter(ctx);
+        var reference = false;
+        if(ctx.REF() != null) {
+            reference = true;
+        }
+        var identifier = (String) stack.pop();
+        var type = (Type) stack.pop();
+        stack.push(new Parameter(identifier, type, reference));
         return null;
     }
 
@@ -111,7 +155,7 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     public Object visitBlock(MiniJParser.BlockContext ctx) {
         super.visitBlock(ctx);
         LinkedList<Statement> statements = new LinkedList<>();
-        while(stack.peek().getClass() == Statement.class) {
+        while(stack.peek().getClass().getSuperclass() == Statement.class && stack.peek().getClass() != DeclarationStatement.class) {
             statements.addFirst((Statement) stack.pop());
         }
         stack.push(new Block(statements));
@@ -143,11 +187,15 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     @Override
     public Object visitCallStatement(MiniJParser.CallStatementContext ctx) {
         super.visitCallStatement(ctx);
-        var identifier = (String) stack.pop();
+
         LinkedList<Expression> expressions = new LinkedList<>();
-        while(stack.peek().getClass() == Expression.class) {
+
+        while(stack.peek().getClass().getSuperclass() == MemoryAccess.class ||
+                stack.peek().getClass().getSuperclass() == Constant.class) {
             expressions.addFirst((Expression) stack.pop());
         }
+
+        var identifier = (String) stack.pop();
         stack.push(new CallStatement(identifier, expressions));
         return null;
     }
@@ -231,21 +279,21 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     @Override
     public Object visitTrueConstant(MiniJParser.TrueConstantContext ctx) {
         super.visitTrueConstant(ctx);
-        stack.push(new StringConstant(ctx.TRUE().getText()));
+        stack.push(new TrueConstant());
         return null;
     }
 
     @Override
     public Object visitFalseConstant(MiniJParser.FalseConstantContext ctx) {
         super.visitFalseConstant(ctx);
-        stack.push(new StringConstant(ctx.FALSE().getText()));
+        stack.push(new FalseConstant());
         return null;
     }
 
     @Override
     public Object visitIntegerConstant(MiniJParser.IntegerConstantContext ctx) {
         super.visitIntegerConstant(ctx);
-        stack.push(new StringConstant(ctx.INTEGER().getText()));
+        stack.push(new IntegerConstant(Long.parseLong(ctx.INTEGER().getText())));
         return null;
     }
 
@@ -259,7 +307,7 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     @Override
     public Object visitMemoryAccess(MiniJParser.MemoryAccessContext ctx) {
         super.visitMemoryAccess(ctx);
-        //TODO MemoryAccess
+        stack.push(new VariableAccess(ctx.ID().getText()));
         return null;
     }
 
@@ -302,6 +350,7 @@ public class CustomBuilder extends MiniJBaseVisitor<Object> {
     @Override
     public Object visitRecordType(MiniJParser.RecordTypeContext ctx) {
         super.visitRecordType(ctx);
+        stack.push(new RecordType((String) stack.pop()));
         return null;
     }
 

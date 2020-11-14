@@ -30,4 +30,18 @@ public class Declaration extends AstElement {
     public void accept(AstVisitor astVisitor) {
         astVisitor.visit(this);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Declaration))
+            return false;
+        if (obj == this)
+            return true;
+        return this.identifier.equals(((Declaration) obj).identifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return identifier.hashCode() * type.hashCode();
+    }
 }
