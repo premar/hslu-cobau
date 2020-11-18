@@ -43,8 +43,6 @@ public class MiniJCompiler {
         // start parsing at outermost level
         MiniJParser.UnitContext unitContext = miniJParser.unit();
 
-        int returnCode = 1;
-
         // semantic check (milestone 3)
         try {
             var astBuilder = new AstBuilder();
@@ -56,7 +54,6 @@ public class MiniJCompiler {
 
             var symbolBuilder = new SymbolBuilder();
             symbolBuilder.visit(program);
-            returnCode = 0;
         } catch (RuntimeException e) {
             System.exit(1);
         }

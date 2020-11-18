@@ -18,12 +18,11 @@ public class DeclarationSymbol {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DeclarationSymbol that = (DeclarationSymbol) o;
-        return Objects.equals(identifier, that.identifier) &&
-                Objects.equals(type, that.type);
+        return Objects.equals(identifier, that.identifier);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identifier, type);
+        return Objects.hash(identifier);
     }
 }

@@ -6,6 +6,7 @@ import ch.hslu.cobau.minij.ast.entity.Procedure;
 import ch.hslu.cobau.minij.ast.entity.RecordStructure;
 import ch.hslu.cobau.minij.ast.expression.VariableAccess;
 import ch.hslu.cobau.minij.ast.statement.AssignmentStatement;
+import ch.hslu.cobau.minij.ast.statement.DeclarationStatement;
 import ch.hslu.cobau.minij.symbol.DeclarationSymbol;
 import ch.hslu.cobau.minij.symbol.SymbolTable;
 
@@ -16,12 +17,23 @@ public class SymbolBuilder extends BaseAstVisitor {
     @Override
     public void visit(Procedure procedure) {
         symbolTable.addProcedure(procedure.getIdentifier());
+        var list = procedure.getFormalDeclaration();
+        var test = list.size();
+        for (int i = 0; i < list.size(); i++) {
+            symbolTable.currentProcedure.addDeclaration(new DeclarationSymbol(list.get(i).getIdentifier(), list.get(i).getType()));
+        }
         super.visit(procedure);
     }
 
     @Override
     public void visit(RecordStructure recordStructure) {
         super.visit(recordStructure);
+    }
+
+    @Override
+    public void visit(VariableAccess variable) {
+        symbolTable.checkAssignment(variable.getIdentifier());
+        super.visit(variable);
     }
 
     @Override
@@ -36,12 +48,6 @@ public class SymbolBuilder extends BaseAstVisitor {
 
     @Override
     public void visit(AssignmentStatement assignment) {
-        if(symbolTable.currentProcedure == null) {
-            throw new RuntimeException("Error");
-        } else {
-            if(assignment.getLeft().getClass() == VariableAccess.class) {
-            }
-        }
         super.visit(assignment);
     }
 }

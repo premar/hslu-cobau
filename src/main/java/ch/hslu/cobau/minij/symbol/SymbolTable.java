@@ -27,4 +27,14 @@ public class SymbolTable {
     public void addDeclaration(DeclarationSymbol declaration) {
         declarationSymbols.add(declaration);
     }
+
+    public void checkAssignment(String identifier) {
+        if(!checkGlobalAssignment(identifier) && !currentProcedure.checkAssignment(identifier)) {
+            throw new RuntimeException("Assignment was not declared");
+        }
+    }
+
+    private boolean checkGlobalAssignment(String identifier) {
+        return declarationSymbols.contains(new DeclarationSymbol(identifier, null));
+    }
 }

@@ -24,6 +24,6 @@ public class ParameterSymbol {
 
     @Override
     public int hashCode() {
-        return Objects.hash(identifier, type);
+        return Objects.hash(identifier);
     }
 }

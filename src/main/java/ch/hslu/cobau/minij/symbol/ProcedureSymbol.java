@@ -33,6 +33,10 @@ public class ProcedureSymbol {
         }
     }
 
+    public boolean checkAssignment(String identifier) {
+        return declarations.contains(new DeclarationSymbol(identifier, null));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
