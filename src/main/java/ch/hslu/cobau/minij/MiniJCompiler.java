@@ -48,13 +48,10 @@ public class MiniJCompiler {
             var astBuilder = new AstBuilder();
             var program = (Program) unitContext.accept(astBuilder);
 
-            var procedures = program.getProcedures();
-            var globals = program.getGlobals();
-            var records = program.getRecords();
-
             var symbolBuilder = new SymbolBuilder();
             symbolBuilder.visit(program);
         } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             System.exit(1);
         }
 

@@ -1,4 +1,9 @@
-procedure main()
+procedure test(int a, int b, int c)
 begin
-number = 0;
+end
+procedure main()
+int number;
+begin
+test(1, number);
+test(number);
 end
