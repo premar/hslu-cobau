@@ -9,7 +9,7 @@ import ch.hslu.cobau.minij.ast.type.*;
 import java.util.LinkedList;
 import java.util.Stack;
 
-public class CustomBuilder extends MiniJBaseVisitor<Object> {
+public class AstBuilder extends MiniJBaseVisitor<Object> {
     private final Stack<Object> proceduresStack = new Stack<>();
     private final Stack<Object> recordStructuresStack = new Stack<>();
     private final Stack<Object> stack = new Stack<>();

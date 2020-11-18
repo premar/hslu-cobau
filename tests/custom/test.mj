@@ -1,8 +1,4 @@
-procedure test(int a, int b)
-begin
-end
 procedure main()
-int number;
 begin
-test(1, number);
+number = 0;
 end

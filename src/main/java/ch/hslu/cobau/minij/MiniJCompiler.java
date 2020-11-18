@@ -1,8 +1,12 @@
 package ch.hslu.cobau.minij;
 
+import ch.hslu.cobau.minij.ast.entity.Procedure;
+import ch.hslu.cobau.minij.ast.entity.Program;
+import ch.hslu.cobau.minij.ast.statement.AssignmentStatement;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 public class MiniJCompiler {
     private static class EnhancedConsoleErrorListener extends ConsoleErrorListener {
@@ -39,9 +43,23 @@ public class MiniJCompiler {
         // start parsing at outermost level
         MiniJParser.UnitContext unitContext = miniJParser.unit();
 
+        int returnCode = 1;
+
         // semantic check (milestone 3)
-        CustomBuilder customBuilder = new CustomBuilder();
-        unitContext.accept(customBuilder);
+        try {
+            var astBuilder = new AstBuilder();
+            var program = (Program) unitContext.accept(astBuilder);
+
+            var procedures = program.getProcedures();
+            var globals = program.getGlobals();
+            var records = program.getRecords();
+
+            var symbolBuilder = new SymbolBuilder();
+            symbolBuilder.visit(program);
+            returnCode = 0;
+        } catch (RuntimeException e) {
+            System.exit(1);
+        }
 
         // code generation (milestone 4)
         // runtime and system libraries (milestone 5)
