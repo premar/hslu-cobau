@@ -9,13 +9,15 @@ import java.util.Objects;
 public class Declaration extends AstElement {
     private final String identifier;
     private final Type type;
+    private final boolean isReference;
 
-    public Declaration(String identifier, Type type) {
+    public Declaration(String identifier, Type type, boolean isReference) {
         Objects.requireNonNull(identifier);
         Objects.requireNonNull(type);
 
         this.identifier = identifier;
         this.type = type;
+        this.isReference = isReference;
     }
 
     public String getIdentifier() {
@@ -26,22 +28,12 @@ public class Declaration extends AstElement {
         return type;
     }
 
+    public boolean isReference() {
+        return isReference;
+    }
+
     @Override
     public void accept(AstVisitor astVisitor) {
         astVisitor.visit(this);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Declaration))
-            return false;
-        if (obj == this)
-            return true;
-        return this.identifier.equals(((Declaration) obj).identifier);
-    }
-
-    @Override
-    public int hashCode() {
-        return identifier.hashCode() * type.hashCode();
     }
 }

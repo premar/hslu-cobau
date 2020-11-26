@@ -9,28 +9,23 @@ import java.util.Objects;
 
 public class Procedure extends Block {
     private final String identifier;
-    private final List<Declaration> declaration;
-    private final List<Parameter> parameter;
+    private final List<Declaration> formalParameters;
 
-    public Procedure(String identifier, List<Parameter> parameter, List<Declaration> declaration, List<Statement> statements) {
+    public Procedure(String identifier, List<Declaration> formalParameters, List<Statement> statements) {
         super(statements);
         Objects.requireNonNull(identifier);
+        Objects.requireNonNull(formalParameters);
 
         this.identifier = identifier;
-        this.parameter = parameter;
-        this.declaration = declaration;
+        this.formalParameters = formalParameters;
     }
 
     public String getIdentifier() {
         return identifier;
     }
 
-    public List<Declaration> getFormalDeclaration() {
-        return declaration;
-    }
-
-    public List<Parameter> getFormalParameter() {
-        return parameter;
+    public List<Declaration> getFormalParameters() {
+        return formalParameters;
     }
 
     public void accept(AstVisitor astVisitor) {
@@ -39,21 +34,7 @@ public class Procedure extends Block {
 
     @Override
     public void visitChildren(AstVisitor astVisitor) {
-        parameter.forEach(parameter -> parameter.accept(astVisitor));
+        formalParameters.forEach(parameter -> parameter.accept(astVisitor));
         super.visitChildren(astVisitor); // statements
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Procedure))
-            return false;
-        if (obj == this)
-            return true;
-        return this.identifier.equals(((Procedure) obj).identifier);
-    }
-
-    @Override
-    public int hashCode() {
-        return identifier.hashCode() * parameter.hashCode() * declaration.hashCode();
     }
 }

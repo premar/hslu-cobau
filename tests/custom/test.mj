@@ -1,9 +1,0 @@
-procedure test(int a, int b, int c)
-begin
-end
-procedure main()
-int number;
-begin
-test(1, number);
-test(number);
-end

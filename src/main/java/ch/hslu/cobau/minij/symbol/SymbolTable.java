@@ -1,59 +1,63 @@
 package ch.hslu.cobau.minij.symbol;
 
-import ch.hslu.cobau.minij.ast.entity.Declaration;
-import ch.hslu.cobau.minij.ast.entity.Parameter;
-import ch.hslu.cobau.minij.ast.entity.Procedure;
-import ch.hslu.cobau.minij.ast.statement.Statement;
-import ch.hslu.cobau.minij.ast.type.IntegerType;
+import ch.hslu.cobau.minij.ast.AstElement;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 
+/**
+ * This class implements a symbol table with two scope levels suitable for MiniJ.
+ */
 public class SymbolTable {
+    public final static Object GLOBAL_SCOPE = new Object();
+    private final Map<Object, Map<String, Symbol>> symbolScopes = new HashMap<>();
 
-    public ProcedureSymbol currentProcedure;
+    /**
+     * Use this method to query the symbol table.
+     * @param scope      should point to the scope of the AST that is currently visited:
+     *                   - SymbolTable.GLOBAL_SCOPE for the global scope that contains
+     *                     global variables, procedure, and records.
+     *                   - procedure instance for the scope to the corresponding procedure
+     *                     that contains parameter and variable declarations.
+     *                   - record instance for the scope of the corresponding record
+     *                     that contains the field declarations.
+     * @param identifier The name of the symbol that is being looked for.
+     * @param symbolKind To restrict the lookup to a specific symbol kind. Use null, if any symbol
+     *                   with given identifier should be returned. Which is typically the case
+     *                   for the code generator.
+     * @return A symbol instance representing the found symbol or null if no symbol is found.
+     */
+    public Symbol findSymbol(Object scope, String identifier, SymbolKind symbolKind) {
+        Symbol symbol = findSymbolScoped(scope, identifier, symbolKind);
+        if (symbol == null) {
+            symbol = findSymbolScoped(GLOBAL_SCOPE, identifier, symbolKind);
+        }
+        return symbol;
+    }
 
-    private HashMap<ProcedureSymbol, ProcedureSymbol> procedureSymbol = new HashMap<ProcedureSymbol, ProcedureSymbol>();
-    private HashMap<DeclarationSymbol, DeclarationSymbol> declarationSymbols = new HashMap<DeclarationSymbol, DeclarationSymbol>();
-
-    public void addProcedure(String identifier) {
-        if(currentProcedure == null) {
-
-            currentProcedure = new ProcedureSymbol(identifier);
-        } else {
-            if(procedureSymbol.containsKey(currentProcedure)) {
-                throw new RuntimeException("Procedure was already declared");
-            } else {
-                procedureSymbol.put(currentProcedure, currentProcedure);
-                currentProcedure = new ProcedureSymbol(identifier);
+    private Symbol findSymbolScoped(Object scope, String identifier, SymbolKind symbolKind) {
+        Symbol symbol = null;
+        Map<String, Symbol> symbols = symbolScopes.get(scope);
+        if (symbols != null && symbols.containsKey(identifier)) {
+            symbol = symbols.get(identifier);
+            if (symbolKind != null && symbol.getKind() != symbolKind) {
+                symbol = null;
             }
         }
+        return symbol;
     }
 
-    public void addDeclaration(DeclarationSymbol declaration) {
-        declarationSymbols.put(declaration, declaration);
-    }
-
-    public void checkAssignment(String identifier) {
-        if(!checkGlobalAssignment(identifier) && !currentProcedure.checkAssignment(identifier)) {
-            throw new RuntimeException("Assignment was not declared");
+    public boolean addSymbol(Object scope, String name, SymbolKind symbolKind, AstElement astElement) {
+        Map<String, Symbol> symbols = symbolScopes.get(scope);
+        if (symbols == null) {
+            symbols = new HashMap<>();
+            symbolScopes.put(scope, symbols);
         }
-    }
-
-    public void checkCallStatement(String identifier, int paramCount) {
-        if(!procedureSymbol.containsKey(new ProcedureSymbol(identifier))) {
-            throw new RuntimeException("Procedure was not declared");
+        if (symbols.containsKey(name)) {
+            return false;
         } else {
-            var toCheck = procedureSymbol.get(new ProcedureSymbol(identifier));
-            var count = toCheck.parameters.size();
-            if(count != paramCount) {
-                throw new RuntimeException("Parameter dont equals.");
-            }
+            symbols.put(name, new Symbol(name, symbolKind, astElement));
+            return true;
         }
-    }
-
-    private boolean checkGlobalAssignment(String identifier) {
-        return declarationSymbols.containsKey(new DeclarationSymbol(identifier, null));
     }
 }
