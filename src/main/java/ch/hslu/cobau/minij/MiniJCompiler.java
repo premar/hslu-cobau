@@ -2,6 +2,7 @@ package ch.hslu.cobau.minij;
 
 import ch.hslu.cobau.minij.ast.*;
 import ch.hslu.cobau.minij.ast.entity.*;
+import ch.hslu.cobau.minij.code.ProgramGenerator;
 import ch.hslu.cobau.minij.semantic.*;
 import ch.hslu.cobau.minij.symbol.*;
 import org.antlr.v4.runtime.*;
@@ -66,8 +67,11 @@ public class MiniJCompiler {
         MainChecker mainChecker = new MainChecker(errorListener);
         mainChecker.visit(astBuilder.getProgram());
 
+        //ProgramGenerator programGenerator = new ProgramGenerator();
+        //program.accept(programGenerator);
+
         if (!errorListener.hasErrors()) {
-            // TODO: Milestone 4: generate program code
+            //System.out.println(programGenerator.getCode());
         } else {
             System.exit(1);
         }
