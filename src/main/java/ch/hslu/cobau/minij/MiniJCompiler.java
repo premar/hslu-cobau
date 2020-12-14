@@ -67,11 +67,11 @@ public class MiniJCompiler {
         MainChecker mainChecker = new MainChecker(errorListener);
         mainChecker.visit(astBuilder.getProgram());
 
-        //ProgramGenerator programGenerator = new ProgramGenerator();
-        //program.accept(programGenerator);
+        ProgramGenerator programGenerator = new ProgramGenerator();
+        program.accept(programGenerator);
 
         if (!errorListener.hasErrors()) {
-            //System.out.println(programGenerator.getCode());
+            System.out.println(programGenerator.getCode());
         } else {
             System.exit(1);
         }

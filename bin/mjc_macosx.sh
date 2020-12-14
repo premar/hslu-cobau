@@ -22,7 +22,7 @@ if [ ! $? -eq 0 ]; then
 fi
 
 # link including runtime
-ld -macosx_version_min 10.12 -e _start -o ${2} build/tmp/compile/file.o build/objects/runtime/*.o -lC -no_pie
+ld -macosx_version_min 10.12 -e _start -o ${2} build/tmp/compile/file.o build/objects/runtime/*.o -L /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -lC -no_pie
 if [ ! $? -eq 0 ]; then
   exit 1
 fi
