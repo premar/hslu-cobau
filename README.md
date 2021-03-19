@@ -1,3 +1,3 @@
-# Project Title
+# hslu-cobau
 
-Modul <Compilerbau> (COBAU) HS2020
+Exercises of the COBAU module at the HSLU.
